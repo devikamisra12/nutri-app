@@ -156,7 +156,8 @@ export default function Home() {
         await new Promise(res => setTimeout(res, 1000));
         throw new Error("HTTP 500: Internal Server Error. The Nutrition Evidence Retrieval service timed out.");
       } else {
-        const res = await fetch('/api/chat', {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+        const res = await fetch(`${backendUrl}/api/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
