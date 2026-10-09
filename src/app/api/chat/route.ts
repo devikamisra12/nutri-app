@@ -5,13 +5,25 @@ import { getOrCreateConversation, insertMessage, getConversationHistory } from '
 import { AssistantResponse } from '@/lib/types';
 import crypto from 'crypto';
 
+// CORS headers for cross-origin requests (Vercel frontend → Railway backend)
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { conversationId, message } = body;
 
     if (!message || message.trim() === '') {
-      return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 });
+      return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400, headers: corsHeaders });
     }
 
     const convId = await getOrCreateConversation(conversationId);
@@ -46,7 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         conversationId: convId,
         response: refusalResponse
-      });
+      }, { headers: corsHeaders });
     }
 
     // Prepare history for LLM
@@ -72,10 +84,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       conversationId: convId,
       response: groqResponse
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Chat API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: corsHeaders });
   }
 }

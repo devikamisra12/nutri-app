@@ -2,9 +2,19 @@ import { Pool } from 'pg';
 import { Message } from './types';
 import crypto from 'crypto';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+let pool: any;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+} else {
+  console.error('DATABASE_URL is not set. Database operations will fail.');
+  // Fallback to a dummy pool that throws on query
+  pool = {
+    query: () => { throw new Error('DATABASE_URL is missing'); }
+  } as any;
+}
 
 export async function getOrCreateConversation(id?: string): Promise<string> {
   if (id) {
