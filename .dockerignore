@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.DS_Store
+.env
+.env.*
+*.db
+*.sqlite
+local.db
+frontend
+agent-transcripts
+*.md

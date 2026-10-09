@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp -r .next/static .next/standalone/.next/static",
-    "start": "HOSTNAME=0.0.0.0 node .next/standalone/server.js",
+    "build": "next build",
+    "start": "node scripts/railway-start.js",
     "lint": "next lint",
     "db:init": "node src/lib/db/init.js"
   },
