@@ -1,6 +1,7 @@
 import { assistantResponseSchema } from './types';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 
 export async function callGroqAPI(messages: { role: string; content: string }[]) {
   const systemPrompt = `You are an AI Nutrition Assistant. Answer general questions about Food, Nutrition, Nutrients, Cooking, Food preparation, Food storage, and Food safety.
@@ -19,11 +20,15 @@ You MUST output your response strictly as a JSON object matching this schema:
 }
 ALL sources MUST be exactly null. Do not invent sources.`;
 
+  const history = messages
+    .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content?.trim())
+    .map((m) => ({ role: m.role, content: m.content }));
+
   const payload = {
-    model: "llama3-8b-8192", // Sample model
+    model: GROQ_MODEL,
     messages: [
       { role: "system", content: systemPrompt },
-      ...messages
+      ...history
     ],
     response_format: { type: "json_object" },
     temperature: 0.2,
@@ -39,16 +44,16 @@ ALL sources MUST be exactly null. Do not invent sources.`;
   });
 
   if (!response.ok) {
-    throw new Error(`Groq API error: ${response.statusText}`);
+    const details = await response.text();
+    console.error('Groq API error body:', details);
+    throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
   const content = data.choices[0].message.content;
   
-  // Parse using Zod to ensure it matches the schema
   const parsed = assistantResponseSchema.parse(JSON.parse(content));
   
-  // Enforce source = null for Milestone 1
   parsed.claims = parsed.claims.map(c => ({ ...c, source: null }));
   
   return parsed;
